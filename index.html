@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinanceFlow - Personal Finance Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <!-- Authentication Section -->
+    <div class="auth-container" id="authContainer">
+        <div class="auth-box">
+            <div class="auth-header">
+                <h1><i class="fas fa-chart-line"></i> FinanceFlow</h1>
+                <p>Take control of your finances</p>
+            </div>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="login-tab">Login</button>
+                <button class="auth-tab" id="register-tab">Sign Up</button>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form active">
+                <div class="form-group">
+                    <label for="login-username">Username</label>
+                    <input type="text" id="login-username" placeholder="Enter your username" required>
+                    <div class="error-message" id="login-username-error"></div>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" placeholder="Enter your password" required>
+                    <div class="error-message" id="login-password-error"></div>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+                <div class="auth-message">
+                    Don't have an account? <a id="switch-to-register">Sign up here</a>
+                </div>
+            </form>
+            
+            <!-- Register Form -->
+            <form id="register-form" class="auth-form">
+                <div class="form-group">
+                    <label for="register-username">Username</label>
+                    <input type="text" id="register-username" placeholder="Choose a username" required>
+                    <div class="error-message" id="register-username-error"></div>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Password</label>
+                    <input type="password" id="register-password" placeholder="Choose a password" required>
+                    <div class="error-message" id="register-password-error"></div>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" id="confirm-password" placeholder="Confirm your password" required>
+                    <div class="error-message" id="confirm-password-error"></div>
+                </div>
+                <button type="submit" class="btn btn-primary">Sign Up</button>
+                <div class="auth-message">
+                    Already have an account? <a id="switch-to-login">Login here</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div class="app-container" id="appContainer">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-chart-line"></i>
+                    <h2>FinanceFlow</h2>
+                </div>
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="user-details">
+                    <h3 id="currentUsername">Username</h3>
+                    <p id="userEmail">user@example.com</p>
+                </div>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item active" data-tab="dashboard">
+                    <a href="#">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-tab="transactions">
+                    <a href="#">
+                        <i class="fas fa-exchange-alt"></i>
+                        <span>Transactions</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-tab="budgets">
+                    <a href="#">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Budgets</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-tab="savings">
+                    <a href="#">
+                        <i class="fas fa-piggy-bank"></i>
+                        <span>Savings</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-tab="reports">
+                    <a href="#">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Reports</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <div class="quick-stats">
+                    <div class="stat">
+                        <i class="fas fa-wallet"></i>
+                        <div>
+                            <small>Balance</small>
+                            <p id="sidebarBalance">$0.00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content" id="mainContent">
+            <!-- Top Header -->
+            <header class="main-header">
+                <div class="header-left">
+                    <h1 id="pageTitle">Dashboard</h1>
+                    <div class="breadcrumb">
+                        <span>FinanceFlow</span> / <span id="currentPage">Dashboard</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="date-display">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span id="currentDate">Loading...</span>
+                    </div>
+                    <button class="btn btn-primary" id="addTransactionBtn">
+                        <i class="fas fa-plus"></i> Add Transaction
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard Tab -->
+            <div class="tab-content active" id="dashboardTab">
+                <!-- Summary Cards -->
+                <div class="summary-cards">
+                    <div class="card card-income">
+                        <div class="card-icon">
+                            <i class="fas fa-arrow-down"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Total Income</h3>
+                            <p class="amount" id="totalIncome">$0.00</p>
+                            <span class="change positive">+0%</span>
+                        </div>
+                    </div>
+                    <div class="card card-expense">
+                        <div class="card-icon">
+                            <i class="fas fa-arrow-up"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Total Expense</h3>
+                            <p class="amount" id="totalExpense">$0.00</p>
+                            <span class="change negative">+0%</span>
+                        </div>
+                    </div>
+                    <div class="card card-balance">
+                        <div class="card-icon">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Current Balance</h3>
+                            <p class="amount" id="currentBalance">$0.00</p>
+                            <span class="change neutral">+0%</span>
+                        </div>
+                    </div>
+                    <div class="card card-savings">
+                        <div class="card-icon">
+                            <i class="fas fa-piggy-bank"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Savings Progress</h3>
+                            <p class="amount" id="savingsProgress">0%</p>
+                            <span class="change positive">On Track</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-section">
+                    <div class="chart-container large">
+                        <div class="chart-header">
+                            <h3><i class="fas fa-chart-bar"></i> Income vs Expenses</h3>
+                            <select id="chartPeriod">
+                                <option value="week">This Week</option>
+                                <option value="month" selected>This Month</option>
+                                <option value="year">This Year</option>
+                            </select>
+                        </div>
+                        <canvas id="incomeExpenseChart"></canvas>
+                    </div>
+                    <div class="chart-container small">
+                        <div class="chart-header">
+                            <h3><i class="fas fa-chart-pie"></i> Expense Categories</h3>
+                        </div>
+                        <canvas id="expenseCategoryChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="recent-transactions">
+                    <div class="section-header">
+                        <h3><i class="fas fa-history"></i> Recent Transactions</h3>
+                        <a href="#" class="view-all" data-tab="transactions">View All</a>
+                    </div>
+                    <div class="table-container">
+                        <table id="recentTransactionsTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Category</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions Tab -->
+            <div class="tab-content" id="transactionsTab">
+                <div class="page-header">
+                    <h2><i class="fas fa-exchange-alt"></i> All Transactions</h2>
+                    <div class="page-actions">
+                        <div class="filter-controls">
+                            <select id="transactionTypeFilter">
+                                <option value="all">All Types</option>
+                                <option value="income">Income</option>
+                                <option value="expense">Expense</option>
+                            </select>
+                            <select id="transactionCategoryFilter">
+                                <option value="all">All Categories</option>
+                            </select>
+                            <input type="month" id="transactionMonthFilter">
+                        </div>
+                        <button class="btn btn-secondary" id="clearFilters">
+                            <i class="fas fa-filter"></i> Clear Filters
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="transactionsTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Budgets Tab -->
+            <div class="tab-content" id="budgetsTab">
+                <div class="page-header">
+                    <h2><i class="fas fa-chart-pie"></i> Budget Management</h2>
+                    <button class="btn btn-primary" id="addBudgetBtn">
+                        <i class="fas fa-plus"></i> Add Budget
+                    </button>
+                </div>
+
+                <div class="budgets-grid">
+                    <!-- Budget cards will be populated by JavaScript -->
+                </div>
+
+                <div class="budget-progress-section">
+                    <h3><i class="fas fa-chart-line"></i> Budget Overview</h3>
+                    <div class="progress-bars">
+                        <!-- Progress bars will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Savings Tab -->
+            <div class="tab-content" id="savingsTab">
+                <div class="page-header">
+                    <h2><i class="fas fa-piggy-bank"></i> Savings Goals</h2>
+                    <button class="btn btn-primary" id="addSavingsBtn">
+                        <i class="fas fa-plus"></i> Add Goal
+                    </button>
+                </div>
+
+                <div class="savings-grid">
+                    <!-- Savings cards will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div class="tab-content" id="reportsTab">
+                <div class="page-header">
+                    <h2><i class="fas fa-file-alt"></i> Financial Reports</h2>
+                    <div class="report-controls">
+                        <div class="date-range">
+                            <input type="date" id="reportStartDate" class="form-control">
+                            <span>to</span>
+                            <input type="date" id="reportEndDate" class="form-control">
+                        </div>
+                        <button class="btn btn-primary" id="generateReportBtn">
+                            <i class="fas fa-chart-bar"></i> Generate Report
+                        </button>
+                    </div>
+                </div>
+
+                <div class="report-summary">
+                    <div class="summary-card">
+                        <i class="fas fa-arrow-down"></i>
+                        <div>
+                            <h4>Total Income</h4>
+                            <p id="reportTotalIncome">$0.00</p>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <i class="fas fa-arrow-up"></i>
+                        <div>
+                            <h4>Total Expenses</h4>
+                            <p id="reportTotalExpense">$0.00</p>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <i class="fas fa-balance-scale"></i>
+                        <div>
+                            <h4>Net Balance</h4>
+                            <p id="reportNetBalance">$0.00</p>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <i class="fas fa-list"></i>
+                        <div>
+                            <h4>Transactions</h4>
+                            <p id="reportTransactionCount">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="export-actions">
+                    <button class="btn btn-danger" id="exportPdfBtn">
+                        <i class="fas fa-file-pdf"></i> Export as PDF
+                    </button>
+                    <button class="btn btn-success" id="exportExcelBtn">
+                        <i class="fas fa-file-excel"></i> Export as Excel
+                    </button>
+                </div>
+
+                <div class="report-table-container">
+                    <div class="table-header">
+                        <h3><i class="fas fa-table"></i> Report Details</h3>
+                        <span id="reportItemsCount">0 items</span>
+                    </div>
+                    <div class="table-container">
+                        <table id="reportTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Category</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Report data will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Transaction Modal -->
+    <div class="modal" id="transactionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-exchange-alt"></i> <span id="modalTitle">Add Transaction</span></h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="transactionForm">
+                    <input type="hidden" id="transactionId">
+                    <div class="form-group">
+                        <label>Type</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="type" value="income" checked>
+                                <span class="radio-custom"></span>
+                                <span class="radio-text">Income</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="type" value="expense">
+                                <span class="radio-custom"></span>
+                                <span class="radio-text">Expense</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="transactionTitle">Title</label>
+                        <input type="text" id="transactionTitle" placeholder="Salary, Groceries, etc." required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="transactionAmount">Amount ($)</label>
+                            <input type="number" id="transactionAmount" min="0" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="transactionCategory">Category</label>
+                            <select id="transactionCategory" required>
+                                <!-- Categories will be populated by JavaScript -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="transactionDate">Date</label>
+                            <input type="date" id="transactionDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="transactionRecurring">Recurring</label>
+                            <select id="transactionRecurring">
+                                <option value="none">None</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="weekly">Weekly</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="transactionDescription">Description (Optional)</label>
+                        <textarea id="transactionDescription" rows="3" placeholder="Add any additional details"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-close">Cancel</button>
+                <button class="btn btn-primary" id="saveTransaction">Save Transaction</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Modal -->
+    <div class="modal" id="budgetModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-chart-pie"></i> <span id="budgetModalTitle">Add Budget</span></h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="budgetForm">
+                    <input type="hidden" id="budgetId">
+                    <div class="form-group">
+                        <label for="budgetCategory">Category</label>
+                        <select id="budgetCategory" required>
+                            <!-- Categories will be populated by JavaScript -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="budgetAmount">Monthly Amount ($)</label>
+                        <input type="number" id="budgetAmount" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="budgetColor">Color</label>
+                        <div class="color-picker">
+                            <input type="color" id="budgetColor" value="#4361ee">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-close">Cancel</button>
+                <button class="btn btn-primary" id="saveBudget">Save Budget</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Savings Modal -->
+    <div class="modal" id="savingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-piggy-bank"></i> <span id="savingsModalTitle">Add Savings Goal</span></h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="savingsForm">
+                    <input type="hidden" id="savingsId">
+                    <div class="form-group">
+                        <label for="savingsGoalName">Goal Name</label>
+                        <input type="text" id="savingsGoalName" placeholder="New Car, Vacation, Emergency Fund" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="savingsTargetAmount">Target Amount ($)</label>
+                            <input type="number" id="savingsTargetAmount" min="0" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="savingsCurrentAmount">Current Amount ($)</label>
+                            <input type="number" id="savingsCurrentAmount" min="0" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="savingsTargetDate">Target Date</label>
+                            <input type="date" id="savingsTargetDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="savingsMonthlyContribution">Monthly Contribution ($)</label>
+                            <input type="number" id="savingsMonthlyContribution" min="0" step="0.01">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-close">Cancel</button>
+                <button class="btn btn-primary" id="saveSavings">Save Goal</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
