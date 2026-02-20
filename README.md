@@ -129,5 +129,3 @@ Static Hosting (Free)
 Traditional Hosting
 Upload all files to public_html via FTP/cPanel
  
-
-<img width="468" height="648" alt="image" src="https://github.com/user-attachments/assets/8aec9c5b-25e2-40f0-9dca-abbd7fba051f" />
